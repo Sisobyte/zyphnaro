@@ -1,0 +1,111 @@
+// BACKEND INTEGRATION:
+// Replace this mock service with the Supabase/API implementation.
+// Table: `source_connections`. See /docs/backend-integration.md and
+// /docs/source-integrations.md for per-source auth and rate-limit detail.
+
+import type { JobSourceInfo } from "@/lib/types";
+
+export const mockSources: JobSourceInfo[] = [
+  {
+    id: "reddit",
+    name: "Reddit",
+    status: "connected",
+    description: "Monitors hiring communities like r/forhire and r/remotejs for new posts.",
+    opportunitiesDiscovered: 62,
+    lastSync: "8 minutes ago",
+    requiresAuth: true,
+  },
+  {
+    id: "upwork",
+    name: "Upwork",
+    status: "connected",
+    description: "Freelance contracts matched against your skills and rate expectations.",
+    opportunitiesDiscovered: 34,
+    lastSync: "22 minutes ago",
+    requiresAuth: true,
+  },
+  {
+    id: "freelancer",
+    name: "Freelancer",
+    status: "available",
+    description: "Freelance jobs and contests across a wide range of categories.",
+    opportunitiesDiscovered: 0,
+    requiresAuth: true,
+  },
+  {
+    id: "adzuna",
+    name: "Adzuna",
+    status: "connected",
+    description: "Aggregated job search engine covering listings across many boards.",
+    opportunitiesDiscovered: 88,
+    lastSync: "1 hour ago",
+    requiresAuth: false,
+  },
+  {
+    id: "greenhouse",
+    name: "Greenhouse",
+    status: "connected",
+    description: "Direct company career pages that use Greenhouse as their ATS.",
+    opportunitiesDiscovered: 41,
+    lastSync: "35 minutes ago",
+    requiresAuth: false,
+  },
+  {
+    id: "lever",
+    name: "Lever",
+    status: "connected",
+    description: "Direct company career pages that use Lever as their ATS.",
+    opportunitiesDiscovered: 27,
+    lastSync: "1 hour ago",
+    requiresAuth: false,
+  },
+  {
+    id: "linkedin",
+    name: "LinkedIn",
+    status: "limited",
+    description: "Public job listings only — full access requires LinkedIn partnership approval.",
+    opportunitiesDiscovered: 19,
+    lastSync: "3 hours ago",
+    requiresAuth: true,
+  },
+  {
+    id: "indeed",
+    name: "Indeed",
+    status: "planned",
+    description: "Planned integration, pending API access review.",
+    opportunitiesDiscovered: 0,
+    requiresAuth: true,
+  },
+  {
+    id: "wellfound",
+    name: "Wellfound",
+    status: "planned",
+    description: "Planned integration for early-stage startup roles.",
+    opportunitiesDiscovered: 0,
+    requiresAuth: true,
+  },
+  {
+    id: "remoteok",
+    name: "Remote OK",
+    status: "planned",
+    description: "Planned integration for remote-first listings.",
+    opportunitiesDiscovered: 0,
+    requiresAuth: false,
+  },
+  {
+    id: "weworkremotely",
+    name: "We Work Remotely",
+    status: "planned",
+    description: "Planned integration for remote-first listings.",
+    opportunitiesDiscovered: 0,
+    requiresAuth: false,
+  },
+  {
+    id: "remotive",
+    name: "Remotive",
+    status: "planned",
+    description: "Planned integration for curated remote tech roles.",
+    opportunitiesDiscovered: 0,
+    requiresAuth: false,
+  },
+];

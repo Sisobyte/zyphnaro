@@ -1,0 +1,182 @@
+@import "tailwindcss";
+
+:root {
+  --background: #f6f7fb;
+  --foreground: #12172b;
+
+  /* Zyphnaro brand tokens */
+  --z-navy-950: #0a0e1a;
+  --z-navy-900: #0d1424;
+  --z-navy-800: #131b30;
+  --z-navy-700: #1b2540;
+  --z-navy-600: #2a3556;
+  --z-slate-400: #7c88a6;
+  --z-slate-300: #a6b0c8;
+
+  --z-brand: #3d5afe;
+  --z-brand-600: #3348d6;
+  --z-brand-50: #edf0ff;
+
+  --z-surface: #f6f7fb;
+  --z-card: #ffffff;
+  --z-border: #e6e8f0;
+  --z-border-strong: #d7dbe8;
+
+  --z-ink: #12172b;
+  --z-ink-soft: #565f7a;
+  --z-ink-faint: #8891ab;
+
+  --z-success: #178a5c;
+  --z-success-bg: #e6f7ef;
+  --z-warning: #b7791f;
+  --z-warning-bg: #fef3e0;
+  --z-danger: #c0362c;
+  --z-danger-bg: #fdeceb;
+  --z-teal: #0f8f8a;
+  --z-teal-bg: #e6f7f6;
+  --z-violet: #6d5bd0;
+  --z-violet-bg: #efecfc;
+
+  /* Marketing-site accent (landing page only) */
+  --z-mint: #2dd4a7;
+  --z-mint-dark: #14b891;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: "Inter", "Segoe UI", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "SFMono-Regular", ui-monospace, Menlo, monospace;
+
+  --color-z-navy-950: var(--z-navy-950);
+  --color-z-navy-900: var(--z-navy-900);
+  --color-z-navy-800: var(--z-navy-800);
+  --color-z-navy-700: var(--z-navy-700);
+  --color-z-navy-600: var(--z-navy-600);
+  --color-z-slate-400: var(--z-slate-400);
+  --color-z-slate-300: var(--z-slate-300);
+
+  --color-z-brand: var(--z-brand);
+  --color-z-brand-600: var(--z-brand-600);
+  --color-z-brand-50: var(--z-brand-50);
+
+  --color-z-surface: var(--z-surface);
+  --color-z-card: var(--z-card);
+  --color-z-border: var(--z-border);
+  --color-z-border-strong: var(--z-border-strong);
+
+  --color-z-ink: var(--z-ink);
+  --color-z-ink-soft: var(--z-ink-soft);
+  --color-z-ink-faint: var(--z-ink-faint);
+
+  --color-z-success: var(--z-success);
+  --color-z-success-bg: var(--z-success-bg);
+  --color-z-warning: var(--z-warning);
+  --color-z-warning-bg: var(--z-warning-bg);
+  --color-z-danger: var(--z-danger);
+  --color-z-danger-bg: var(--z-danger-bg);
+  --color-z-teal: var(--z-teal);
+  --color-z-teal-bg: var(--z-teal-bg);
+  --color-z-violet: var(--z-violet);
+  --color-z-violet-bg: var(--z-violet-bg);
+
+  --color-z-mint: var(--z-mint);
+  --color-z-mint-dark: var(--z-mint-dark);
+}
+
+body {
+  background: var(--z-surface);
+  color: var(--z-ink);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Inter", Roboto, Helvetica, Arial, sans-serif;
+  font-feature-settings: "cv11", "ss01";
+}
+
+* {
+  border-color: var(--z-border);
+}
+
+::selection {
+  background: var(--z-brand-50);
+  color: var(--z-brand-600);
+}
+
+/* Waving hand in the dashboard greeting: waves twice on load, then rests. */
+@keyframes z-wave {
+  0%, 60%, 100% { transform: rotate(0deg); }
+  10% { transform: rotate(16deg); }
+  20% { transform: rotate(-10deg); }
+  30% { transform: rotate(16deg); }
+  40% { transform: rotate(-6deg); }
+  50% { transform: rotate(10deg); }
+}
+.z-wave {
+  transform-origin: 70% 90%;
+  animation: z-wave 1.8s ease-in-out 0.5s 2;
+}
+@media (prefers-reduced-motion: reduce) {
+  .z-wave { animation: none; }
+}
+
+/* Thin, quiet scrollbars for the sidebar and panels */
+.z-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.z-scroll::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.12);
+  border-radius: 999px;
+}
+.z-scroll-light::-webkit-scrollbar-thumb {
+  background: var(--z-border-strong);
+  border-radius: 999px;
+}
+
+/* Used by the Tailored CV "Download PDF" button (window.print()) — hides
+   everything on the page except the CV preview content itself, so the
+   browser's print/Save-as-PDF output is just the CV, not the sidebar,
+   nav, and surrounding cards. See tailored-cvs/[id]/page.tsx. */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #tailored-cv-print-target,
+  #tailored-cv-print-target * {
+    visibility: visible;
+  }
+  #tailored-cv-print-target {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    border: none !important;
+  }
+}
+/* ---------- Landing page: the opportunity radar ---------- */
+.z-display {
+  font-family: "Bricolage Grotesque Variable", "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  letter-spacing: -0.025em;
+}
+
+/* One full turn every 9 seconds. Each dot flashes as the beam reaches it, using
+   an animation-delay of (its angle / 360) * 9s, set inline on the dot. */
+@keyframes z-sweep {
+  to { transform: rotate(360deg); }
+}
+@keyframes z-blip {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(2); }
+  12% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.25); }
+  100% { opacity: 0.16; transform: translate(-50%, -50%) scale(1); }
+}
+@keyframes z-ring {
+  0% { opacity: 0.8; transform: translate(-50%, -50%) scale(0.6); }
+  60% { opacity: 0; transform: translate(-50%, -50%) scale(2.2); }
+  100% { opacity: 0; transform: translate(-50%, -50%) scale(2.2); }
+}
+.z-radar-sweep { animation: z-sweep 9s linear infinite; }
+.z-radar-blip { animation: z-blip 9s linear infinite; }
+.z-radar-ring { animation: z-ring 9s ease-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .z-radar-sweep { animation: none; transform: rotate(40deg); }
+  .z-radar-blip { animation: none; opacity: 0.4; transform: translate(-50%, -50%); }
+  .z-radar-ring { animation: none; opacity: 0; }
+}
