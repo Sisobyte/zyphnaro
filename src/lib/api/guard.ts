@@ -18,6 +18,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { getSettings } from "@/lib/admin/settings";
 
 type Limit = { max: number; windowMs: number };
 
@@ -50,6 +51,8 @@ export type GuardOptions = {
   /** Largest accepted request body in bytes. */
   maxBytes: number;
   limit?: Limit;
+  /** Set for routes that don't call the AI provider (they still get auth + rate limit). */
+  skipAiSwitch?: boolean;
 };
 
 export type GuardResult<T> =
@@ -68,6 +71,14 @@ export async function guardAiRequest<T = unknown>(req: Request, opts: GuardOptio
     const { data } = await supabase.auth.getUser();
     if (!data.user) return fail("Please sign in to use this feature.", 401);
     userId = data.user.id;
+  }
+
+  // Admin kill switch: when AI is turned off, AI routes stop before doing any work.
+  if (!opts.skipAiSwitch) {
+    const settings = await getSettings();
+    if (!settings.ai.enabled) {
+      return fail("AI features are temporarily turned off. Please try again later.", 503);
+    }
   }
 
   const limit = opts.limit ?? DEFAULT_LIMIT;

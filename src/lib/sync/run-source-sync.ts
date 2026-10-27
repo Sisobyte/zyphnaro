@@ -18,6 +18,8 @@ import { HackerNewsSource } from "@/lib/services/sources/hackernews-source";
 import type { JobSource } from "@/lib/services/sources/job-source";
 import type { NormalizedOpportunityInput } from "@/lib/services/sources/types";
 import { notifyMatchesForOpportunities } from "./notify-matches";
+import { getSettings } from "@/lib/admin/settings";
+import { recordError } from "@/lib/admin/ai-usage";
 
 // JoobleSources and MyJobMagSources each expand to one JobSource per
 // configured country (see jooble-regions.ts / myjobmag-feeds.ts) — adding
@@ -69,6 +71,9 @@ function toRow(o: NormalizedOpportunityInput) {
   };
 }
 
+/** Names of every configured source (the admin page lists these). */
+export const SOURCE_NAMES: string[] = sources.map((s) => s.name);
+
 export interface SourceSyncResult {
   perSource: { name: string; fetched: number; error?: string }[];
   totalFetched: number;
@@ -77,13 +82,69 @@ export interface SourceSyncResult {
   /** Why alerts were or weren't sent. Only set when the sync wrote to the database. */
   notifyStats?: NotifyStats;
   skippedWrite: boolean;
+  /** Set when the run didn't start (e.g. an admin paused syncing). */
+  paused?: boolean;
 }
 
-export async function runSourceSync(options: { dryRun?: boolean } = {}): Promise<SourceSyncResult> {
+export type SyncOptions = {
+  dryRun?: boolean;
+  /** Who started it, recorded in the sync history. */
+  trigger?: "cron" | "manual" | "admin" | "script";
+  /** An admin pressing "Run now" overrides the global pause (paused sources still stay skipped). */
+  ignoreGlobalPause?: boolean;
+};
+
+async function recordRun(run: { startedAt: string; trigger: string; result?: SourceSyncResult; error?: string }) {
+  try {
+    if (!process.env.SUPABASE_SERVICE_ROLE_KEY || !process.env.NEXT_PUBLIC_SUPABASE_URL) return;
+    const db = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+    const r = run.result;
+    if (run.error) await recordError({ source: "sync", route: "sync", message: run.error });
+    for (const p of r?.perSource ?? []) {
+      if (p.error && p.error !== "Paused by an admin") await recordError({ source: "sync", route: p.name, message: p.error });
+    }
+    await db.from("sync_runs").insert({
+      started_at: run.startedAt,
+      finished_at: new Date().toISOString(),
+      trigger: run.trigger,
+      per_source: r?.perSource ?? [],
+      total_fetched: r?.totalFetched ?? 0,
+      written: r?.written ?? 0,
+      notified: r?.notified ?? 0,
+      notify_stats: r?.notifyStats ?? null,
+      error: run.error ?? null,
+    });
+  } catch (e) {
+    console.error("[sync] couldn't record run:", e instanceof Error ? e.message : e);
+  }
+}
+
+export async function runSourceSync(options: SyncOptions = {}): Promise<SourceSyncResult> {
+  const startedAt = new Date().toISOString();
+  const trigger = options.trigger ?? "manual";
+  const settings = await getSettings({ fresh: true });
+  if (settings.sync.paused && !options.ignoreGlobalPause) {
+    return { perSource: [], totalFetched: 0, written: 0, notified: 0, skippedWrite: true, paused: true };
+  }
+  try {
+    const result = await runSourceSyncInner(options, settings.sync.pausedSources);
+    if (!options.dryRun) await recordRun({ startedAt, trigger, result });
+    return result;
+  } catch (e) {
+    if (!options.dryRun) await recordRun({ startedAt, trigger, error: e instanceof Error ? e.message : String(e) });
+    throw e;
+  }
+}
+
+async function runSourceSyncInner(options: SyncOptions, pausedSources: string[]): Promise<SourceSyncResult> {
   const perSource: SourceSyncResult["perSource"] = [];
   const allRows: ReturnType<typeof toRow>[] = [];
 
   for (const source of sources) {
+    if (pausedSources.includes(source.name)) {
+      perSource.push({ name: source.name, fetched: 0, error: "Paused by an admin" });
+      continue;
+    }
     try {
       const raw = await source.fetchOpportunities();
       const normalized = raw.map((r) => source.normalizeOpportunity(r));

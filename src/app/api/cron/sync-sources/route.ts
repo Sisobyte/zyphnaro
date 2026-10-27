@@ -27,7 +27,7 @@ export async function GET(req: Request) {
   }
 
   try {
-    const result = await runSourceSync();
+    const result = await runSourceSync({ trigger: "cron" });
     return NextResponse.json({ ok: true, ...result });
   } catch (error) {
     console.error("[cron/sync-sources] failed:", error);

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { guardAiRequest } from "@/lib/api/guard";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { deleteUserCompletely } from "@/lib/admin/delete-user";
 
 // Permanently deletes the signed-in person's account and everything tied to it.
 //
@@ -14,6 +15,7 @@ export async function POST(req: Request) {
     name: "account/delete",
     maxBytes: 1_000,
     limit: { max: 3, windowMs: 60 * 60_000 },
+    skipAiSwitch: true,
   });
   if (!guard.ok) return guard.response;
   if (!guard.userId) return NextResponse.json({ error: "Account deletion needs a signed-in account." }, { status: 400 });
@@ -22,20 +24,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const admin = createAdminClient();
-    const uid = guard.userId;
-
-    for (const bucket of ["cv-documents", "avatars"]) {
-      const { data: files } = await admin.storage.from(bucket).list(uid);
-      const paths = (files ?? []).map((f) => `${uid}/${f.name}`);
-      if (paths.length) {
-        const { error } = await admin.storage.from(bucket).remove(paths);
-        if (error) console.error(`[account/delete] couldn't remove ${bucket} files:`, error.message);
-      }
-    }
-
-    const { error } = await admin.auth.admin.deleteUser(uid);
-    if (error) throw error;
+    await deleteUserCompletely(createAdminClient(), guard.userId);
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error("[account/delete] failed:", error);

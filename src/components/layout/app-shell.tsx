@@ -3,13 +3,17 @@ import { TopBar } from "./topbar";
 import { MobileHeader } from "./mobile-header";
 import { MobileBottomNav } from "./mobile-bottom-nav";
 import { RealtimeListener } from "./realtime-listener";
+import { ActivityPing } from "./activity-ping";
+import { SiteBanner } from "./site-banner";
 
-export function AppShell({ children }: { children: React.ReactNode }) {
+export function AppShell({ children, banner }: { children: React.ReactNode; banner?: { text: string; level: "info" | "warning" } | null }) {
   return (
     <div className="flex h-dvh overflow-hidden bg-z-surface">
       <RealtimeListener />
+      <ActivityPing />
       <Sidebar />
       <div className="flex min-w-0 flex-1 flex-col lg:ml-64">
+        {banner && <SiteBanner text={banner.text} level={banner.level} />}
         <TopBar />
         <MobileHeader />
         <main className="z-scroll-light flex-1 overflow-y-auto pb-20 lg:pb-0">

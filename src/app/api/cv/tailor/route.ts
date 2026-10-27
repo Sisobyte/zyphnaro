@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { aiService } from "@/lib/services/ai";
 import { getUserCvBase64 } from "@/lib/services/ai/cv-content";
+import { trackAi } from "@/lib/admin/ai-usage";
 import { guardAiRequest, aiFailure, SMALL_BODY } from "@/lib/api/guard";
 import type { TailorCVInput } from "@/lib/types";
 
@@ -14,6 +15,7 @@ export async function POST(req: Request) {
     limit: { max: 10, windowMs: 60_000 },
   });
   if (!guard.ok) return guard.response;
+  trackAi("cv/tailor", guard.userId);
 
   const cv = await getUserCvBase64();
 

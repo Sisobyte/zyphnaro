@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { aiService } from "@/lib/services/ai";
+import { trackAi } from "@/lib/admin/ai-usage";
 import { guardAiRequest, aiFailure, SMALL_BODY } from "@/lib/api/guard";
 
 // AI INTEGRATION: see /docs/ai-integration.md
@@ -51,6 +52,7 @@ const bodySchema = z.object({
 export async function POST(req: Request) {
   const guard = await guardAiRequest(req, { name: "ai/analyze-opportunity", maxBytes: SMALL_BODY });
   if (!guard.ok) return guard.response;
+  trackAi("ai/analyze-opportunity", guard.userId);
 
   const parsed = bodySchema.safeParse(guard.body);
   if (!parsed.success) {

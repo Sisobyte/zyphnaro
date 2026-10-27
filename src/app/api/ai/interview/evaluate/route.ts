@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { aiService } from "@/lib/services/ai";
+import { trackAi } from "@/lib/admin/ai-usage";
 import { guardAiRequest, aiFailure, SMALL_BODY } from "@/lib/api/guard";
 import type { InterviewAnswerInput } from "@/lib/types";
 
@@ -7,6 +8,7 @@ import type { InterviewAnswerInput } from "@/lib/types";
 export async function POST(req: Request) {
   const guard = await guardAiRequest<InterviewAnswerInput>(req, { name: "ai/interview/evaluate", maxBytes: SMALL_BODY });
   if (!guard.ok) return guard.response;
+  trackAi("ai/interview/evaluate", guard.userId);
   const body = guard.body;
   try {
     const evaluation = await aiService.evaluateInterviewAnswer(body);

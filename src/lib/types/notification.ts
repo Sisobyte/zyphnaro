@@ -3,7 +3,8 @@ export type NotificationType =
   | "concern"
   | "cv"
   | "interview"
-  | "application";
+  | "application"
+  | "announcement";
 
 export interface Notification {
   id: string;

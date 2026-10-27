@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { aiService } from "@/lib/services/ai";
+import { trackAi } from "@/lib/admin/ai-usage";
 import { guardAiRequest, aiFailure, CV_BODY } from "@/lib/api/guard";
 import type { CVExtractionInput } from "@/lib/types";
 
@@ -16,6 +17,7 @@ export async function POST(req: Request) {
     limit: { max: 6, windowMs: 60_000 },
   });
   if (!guard.ok) return guard.response;
+  trackAi("cv/extract-profile", guard.userId);
   const body = guard.body;
 
   if (typeof body.cvFileBase64 !== "string" || body.cvFileBase64.length === 0) {

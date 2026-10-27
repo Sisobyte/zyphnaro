@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect } from "react";
+import { reportClientError } from "@/lib/report-error";
 
 // Catches unexpected errors in a page so people see a calm message and a retry
 // button instead of a blank screen. The details are only logged.
 export default function ErrorPage({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
   useEffect(() => {
     console.error(error);
+    reportClientError(error);
   }, [error]);
 
   return (

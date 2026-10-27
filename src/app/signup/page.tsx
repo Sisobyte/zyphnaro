@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -9,6 +9,7 @@ import { z } from "zod";
 import { passwordRule } from "@/lib/password-policy";
 import { Mail, Lock, User, ArrowRight, MailCheck } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Button } from "@/components/ui/button";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { setMockSession } from "@/lib/mock-session";
@@ -34,6 +35,16 @@ export default function SignupPage() {
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [checkEmail, setCheckEmail] = useState(false);
+  const [closed, setClosed] = useState(false);
+
+  // An admin can close registration (Admin → Controls).
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    fetch("/api/public-settings")
+      .then((r) => r.json())
+      .then((d: { signupsEnabled?: boolean }) => setClosed(d.signupsEnabled === false))
+      .catch(() => {});
+  }, []);
   const {
     register,
     handleSubmit,
@@ -42,6 +53,10 @@ export default function SignupPage() {
 
   const onSubmit = handleSubmit(async (values) => {
     setFormError(null);
+    if (closed) {
+      setFormError("Sign-ups are closed right now. Please check back soon.");
+      return;
+    }
     setLoading(true);
 
     if (isSupabaseConfigured) {
@@ -139,18 +154,12 @@ export default function SignupPage() {
         </div>
         <div>
           <label className="mb-1 block text-xs font-medium text-z-ink-soft">Password</label>
-          <div className="relative">
-            <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-z-ink-faint" />
-            <Input type="password" placeholder="••••••••" className="pl-9" {...register("password")} />
-          </div>
+          <PasswordInput leftIcon={<Lock className="h-4 w-4" />} placeholder="••••••••" className="pl-9" {...register("password")} />
           {errors.password && <p className="mt-1 text-xs text-z-danger">{errors.password.message}</p>}
         </div>
         <div>
           <label className="mb-1 block text-xs font-medium text-z-ink-soft">Confirm password</label>
-          <div className="relative">
-            <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-z-ink-faint" />
-            <Input type="password" placeholder="••••••••" className="pl-9" {...register("confirmPassword")} />
-          </div>
+          <PasswordInput leftIcon={<Lock className="h-4 w-4" />} placeholder="••••••••" className="pl-9" {...register("confirmPassword")} />
           {errors.confirmPassword && <p className="mt-1 text-xs text-z-danger">{errors.confirmPassword.message}</p>}
         </div>
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Flame, ShieldAlert, FileText, CalendarClock, Briefcase } from "lucide-react";
+import { Flame, ShieldAlert, FileText, CalendarClock, Briefcase, Megaphone } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { cn, timeAgo } from "@/lib/utils";
 import type { Notification } from "@/lib/types";
@@ -12,6 +12,7 @@ const iconMap = {
   cv: FileText,
   interview: CalendarClock,
   application: Briefcase,
+  announcement: Megaphone,
 };
 
 const toneMap = {
@@ -20,6 +21,7 @@ const toneMap = {
   cv: "bg-z-brand-50 text-z-brand-600",
   interview: "bg-z-violet-bg text-z-violet",
   application: "bg-z-success-bg text-z-success",
+  announcement: "bg-z-brand-50 text-z-brand-600",
 };
 
 export function NotificationItem({ notification, onRead }: { notification: Notification; onRead: (id: string) => void }) {

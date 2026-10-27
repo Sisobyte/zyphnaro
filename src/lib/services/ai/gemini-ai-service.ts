@@ -27,6 +27,7 @@ import type {
 } from "@/lib/types";
 import type { InterviewEvaluation, InterviewQuestion } from "@/lib/types";
 import { geminiApiKey, geminiModel } from "./config";
+import { recordAiUsage } from "@/lib/admin/ai-usage";
 import {
   cvAIResultSchema,
   cvExtractionResultSchema,
@@ -48,6 +49,26 @@ function extractJson(text: string): unknown {
   return JSON.parse(cleaned);
 }
 
+// Runs one Gemini call and records tokens, time and success/failure for the
+// admin AI-usage page. Recording never changes the result or the error.
+async function timed<T extends { usageMetadata?: { promptTokenCount?: number; candidatesTokenCount?: number } }>(call: () => Promise<T>): Promise<T> {
+  const started = Date.now();
+  try {
+    const res = await call();
+    await recordAiUsage({
+      model: geminiModel,
+      inputTokens: res.usageMetadata?.promptTokenCount,
+      outputTokens: res.usageMetadata?.candidatesTokenCount,
+      durationMs: Date.now() - started,
+      ok: true,
+    });
+    return res;
+  } catch (e) {
+    await recordAiUsage({ model: geminiModel, durationMs: Date.now() - started, ok: false, error: e instanceof Error ? e.message : String(e) });
+    throw e;
+  }
+}
+
 async function generateJSON(prompt: string, parts?: Array<{ inlineData: { mimeType: string; data: string } }>) {
   const ai = client();
   const contentParts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
@@ -55,14 +76,16 @@ async function generateJSON(prompt: string, parts?: Array<{ inlineData: { mimeTy
   ];
   if (parts) contentParts.push(...parts);
 
-  const response = await ai.models.generateContent({
-    model: geminiModel,
-    contents: [{ role: "user", parts: contentParts }],
-    config: {
-      responseMimeType: "application/json",
-      temperature: 0.4,
-    },
-  });
+  const response = await timed(() =>
+    ai.models.generateContent({
+      model: geminiModel,
+      contents: [{ role: "user", parts: contentParts }],
+      config: {
+        responseMimeType: "application/json",
+        temperature: 0.4,
+      },
+    })
+  );
 
   const text = response.text;
   if (!text) throw new Error("Gemini returned an empty response.");
@@ -71,11 +94,13 @@ async function generateJSON(prompt: string, parts?: Array<{ inlineData: { mimeTy
 
 async function generateText(prompt: string) {
   const ai = client();
-  const response = await ai.models.generateContent({
-    model: geminiModel,
-    contents: [{ role: "user", parts: [{ text: prompt }] }],
-    config: { temperature: 0.6 },
-  });
+  const response = await timed(() =>
+    ai.models.generateContent({
+      model: geminiModel,
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: { temperature: 0.6 },
+    })
+  );
   const text = response.text;
   if (!text) throw new Error("Gemini returned an empty response.");
   return text.trim();

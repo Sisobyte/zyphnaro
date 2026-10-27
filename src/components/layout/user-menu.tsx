@@ -3,7 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { User, Settings, LogOut } from "lucide-react";
+import { User, Settings, LogOut, ShieldCheck, MessageSquare } from "lucide-react";
+import { FeedbackDialog } from "@/components/feedback/feedback-dialog";
 import { cn } from "@/lib/utils";
 import { clearMockSession } from "@/lib/mock-session";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
@@ -23,6 +24,19 @@ export function UserMenu({
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const router = useRouter();
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
+
+  // Only admins see the Admin link. The server decides; this just asks once.
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+    let cancelled = false;
+    fetch("/api/admin/me")
+      .then((r) => r.json())
+      .then((d: { admin?: boolean }) => { if (!cancelled && d.admin) setIsAdmin(true); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -81,6 +95,29 @@ export function UserMenu({
           >
             <Settings className="h-4 w-4" /> Settings
           </Link>
+          {isSupabaseConfigured && (
+            <button
+              onClick={() => { setOpen(false); setFeedbackOpen(true); }}
+              className={cn(
+                "flex w-full items-center gap-2 rounded-md px-2.5 py-2 text-sm",
+                dark ? "text-z-slate-300 hover:bg-z-navy-700 hover:text-white" : "text-z-ink-soft hover:bg-z-surface hover:text-z-ink"
+              )}
+            >
+              <MessageSquare className="h-4 w-4" /> Send feedback
+            </button>
+          )}
+          {isAdmin && (
+            <Link
+              href="/admin"
+              onClick={() => setOpen(false)}
+              className={cn(
+                "flex items-center gap-2 rounded-md px-2.5 py-2 text-sm",
+                dark ? "text-z-slate-300 hover:bg-z-navy-700 hover:text-white" : "text-z-ink-soft hover:bg-z-surface hover:text-z-ink"
+              )}
+            >
+              <ShieldCheck className="h-4 w-4" /> Admin
+            </Link>
+          )}
           <div className={cn("my-1 h-px", dark ? "bg-z-navy-700" : "bg-z-border")} />
           <button
             onClick={logout}
@@ -90,6 +127,7 @@ export function UserMenu({
           </button>
         </div>
       )}
+      <FeedbackDialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </div>
   );
 }
